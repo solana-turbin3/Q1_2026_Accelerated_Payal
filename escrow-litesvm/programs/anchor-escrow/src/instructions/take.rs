@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked, CloseAccount, close_account}};
-
+use crate::error::EscrowError;
 use crate::state::Escrow;
-
+const DAYS: i64 = 5 * 24 * 60 * 60;
 //Create context
 #[derive(Accounts)]
 pub struct Take<'info> {
@@ -58,6 +58,7 @@ pub struct Take<'info> {
 //Close vault account
 impl<'info> Take<'info> {
     pub fn deposit(&mut self) -> Result<()> {
+        require!(self.escrow.created_at + DAYS < Clock::get()?.unix_timestamp, EscrowError::EscrowExpired);
         let cpi_program = self.token_program.to_account_info();
 
         let cpi_accounts = TransferChecked {

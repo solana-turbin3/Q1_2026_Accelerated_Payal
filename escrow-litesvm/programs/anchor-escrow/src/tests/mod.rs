@@ -3,8 +3,7 @@ mod tests {
 
     use {
         anchor_lang::{
-            prelude::msg, solana_program::program_pack::Pack, AccountDeserialize, InstructionData,
-            ToAccountMetas,
+            AccountDeserialize, InstructionData, ToAccountMetas, prelude::{Clock, msg}, solana_program::program_pack::Pack
         },
         anchor_spl::{
             associated_token::{self, spl_associated_token_account},
@@ -12,7 +11,7 @@ mod tests {
         },
         litesvm::LiteSVM,
         litesvm_token::{
-            spl_token::ID as TOKEN_PROGRAM_ID, CreateAssociatedTokenAccount, CreateMint, MintTo,
+            CreateAssociatedTokenAccount, CreateMint, MintTo, spl_token::ID as TOKEN_PROGRAM_ID
         },
         solana_account::Account,
         solana_address::Address,
@@ -280,6 +279,10 @@ fn test_take() {
         program.latest_blockhash(),
     ))
     .unwrap();
+let days=5*24*60*60;
+    let mut clock:Clock =program.get_sysvar();
+    clock.unix_timestamp+=days+1;
+    program.set_sysvar(&clock);
     let take_ix = Instruction {
         program_id: PROGRAM_ID,
         accounts: crate::accounts::Take {
