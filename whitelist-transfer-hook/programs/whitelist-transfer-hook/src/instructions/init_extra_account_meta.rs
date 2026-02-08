@@ -1,7 +1,7 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::{feature::create_account, *}, system_program::CreateAccount};
 use anchor_spl::token_interface::Mint;
 use spl_tlv_account_resolution::{
-    account::ExtraAccountMeta, 
+    account::ExtraAccountMeta, seeds::Seed,
     state::ExtraAccountMetaList
 };
 
@@ -17,8 +17,8 @@ pub struct InitializeExtraAccountMetaList<'info> {
         init,
         seeds = [b"extra-account-metas", mint.key().as_ref()],
         bump,
-        space = ExtraAccountMetaList::size_of(
-            InitializeExtraAccountMetaList::extra_account_metas()?.len()
+        space =  ExtraAccountMetaList::size_of(
+            InitializeExtraAccountMetaList::extra_account_metas().unwrap().len()
         ).unwrap(),
         payer = payer
     )]
@@ -28,16 +28,23 @@ pub struct InitializeExtraAccountMetaList<'info> {
 }
 
 impl<'info> InitializeExtraAccountMetaList<'info> {
+  
     pub fn extra_account_metas() -> Result<Vec<ExtraAccountMeta>> {
         // Derive the whitelist PDA using our program ID
-        let (whitelist_pda, _bump) = Pubkey::find_program_address(
-            &[b"whitelist"],
-            &ID
-        );
+        // let (whitelist_pda, _bump) = Pubkey::find_program_address(
+        //     &[b"whitelist"],
+        //     &ID
+        // );
         
         Ok(
             vec![
-                ExtraAccountMeta::new_with_pubkey(&whitelist_pda.to_bytes().into(), false, false).unwrap(),
+                ExtraAccountMeta::new_with_seeds(
+                    &[Seed::Literal {
+                    bytes: b"whitelist".to_vec(),
+                },Seed::AccountKey {
+                    index:3,
+                }]
+                    , false, false).unwrap(),
             ]
         )
     }

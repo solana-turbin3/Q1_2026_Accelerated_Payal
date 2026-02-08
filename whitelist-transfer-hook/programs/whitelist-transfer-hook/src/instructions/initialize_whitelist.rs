@@ -10,7 +10,9 @@ pub struct InitializeWhitelist<'info> {
         init,
         payer = admin,
         space = 8 + Whitelist::INIT_SPACE,
-        seeds = [b"whitelist",admin.key().as_ref()],
+        // Use a distinct root seed so per-address whitelist PDAs can use the
+        // `b"whitelist"` seed without colliding with this root account.
+        seeds = [b"whitelist-root", admin.key().as_ref()],
         bump
     )]
     pub whitelist: Account<'info, Whitelist>,

@@ -87,14 +87,17 @@ use crate::state::whitelist::Whitelist;
 pub struct AddToWhitelist<'info>{
     #[account(mut)]
     pub admin: Signer<'info>,
+    // Create one PDA per whitelisted address. Use the `b"whitelist"` seed
+    // together with the address to derive an entry PDA that doesn't collide
+    // with the root whitelist account (which uses `b"whitelist-root"`).
     #[account(
         init,
-        payer=admin,
-        seeds=[b"whitelist",address.as_ref()],
-        space=Whitelist::INIT_SPACE,
+        payer = admin,
+        seeds = [b"whitelist", address.as_ref()],
         bump,
+        space = 8 + Whitelist::INIT_SPACE,
     )]
-    pub whitelist:Account<'info,Whitelist>,
+    pub whitelist: Account<'info, Whitelist>,
     pub system_program:Program<'info,System>,
 }
 
@@ -105,11 +108,11 @@ pub struct RemoveFromWhitelist<'info>{
 pub admin: Signer<'info>,
 #[account(
     mut,
-    close=admin,
-    seeds=[b"whitelist",address.as_ref()],
-    bump=whitelist.bump,
-)]
- pub whitelist:Account<'info,Whitelist>,
+    close = admin,
+    seeds = [b"whitelist", address.as_ref()],
+    bump = whitelist.bump,
+) ]
+ pub whitelist: Account<'info, Whitelist>,
     pub system_program:Program<'info,System>,
 }
 impl<'info> AddToWhitelist<'info>{

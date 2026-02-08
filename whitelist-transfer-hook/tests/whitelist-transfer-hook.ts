@@ -58,20 +58,17 @@ describe("whitelist-transfer-hook", () => {
     program.programId,
   );
 
-  const [whitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("whitelist"),
-        provider.publicKey.toBuffer(),
-    ],
-    program.programId
-  );
+  
   const user = provider.publicKey;
-
+// Root whitelist PDA (keeps admin/root info). Uses a distinct seed
+// so per-address PDAs can use the `b"whitelist"` seed without colliding.
+const [WhitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+  [Buffer.from("whitelist-root"), user.toBuffer()],
+  program.programId
+);
+// per-address whitelist PDA (one PDA per whitelisted address)
 const [userWhitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
-  [
-    Buffer.from("whitelist"),
-    user.toBuffer(),
-  ],
+  [Buffer.from("whitelist"), user.toBuffer()],
   program.programId
 );
 
@@ -80,12 +77,12 @@ const [userWhitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
     const tx = await program.methods.initializeWhitelist()
       .accountsPartial({
         admin: provider.publicKey,
-        whitelist: userWhitelistPDA,
+        whitelist: WhitelistPDA,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       .rpc();
 
-    console.log("\nWhitelist initialized:", userWhitelistPDA.toBase58());
+    console.log("\nWhitelist initialized:", WhitelistPDA.toBase58());
     console.log("Transaction signature:", tx);
   });
 
@@ -93,7 +90,9 @@ const [userWhitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
     const tx = await program.methods.addToWhitelist(provider.publicKey)
       .accountsPartial({
         admin: provider.publicKey,
-        whitelist: whitelistPDA,
+        // pass the per-address PDA where the entry will be created
+        whitelist: userWhitelistPDA,
+        
       })
       .rpc();
 
@@ -105,7 +104,8 @@ const [userWhitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
     const tx = await program.methods.removeFromWhitelist(provider.publicKey)
       .accountsPartial({
         admin: provider.publicKey,
-        whitelist: whitelistPDA,
+        // remove the per-address entry
+        whitelist: userWhitelistPDA,
       })
       .rpc();
 
@@ -217,15 +217,7 @@ const [userWhitelistPDA] = anchor.web3.PublicKey.findProgramAddressSync(
 
     // Manually add the extra accounts required by the transfer hook
     // These accounts are needed for the CPI to our transfer hook program
-    transferInstruction.keys.push(
-      // ExtraAccountMetaList PDA
-      { pubkey: extraAccountMetaListPDA, isSigner: false, isWritable: false },
-      // Whitelist PDA (the extra account we defined)
-      { pubkey: whitelistPDA, isSigner: false, isWritable: false },
-      // Transfer hook program
-      { pubkey: program.programId, isSigner: false, isWritable: false },
-    );
-
+   
     const transaction = new Transaction().add(transferInstruction);
 
     try {
