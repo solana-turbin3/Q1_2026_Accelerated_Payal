@@ -18,5 +18,5 @@ pub use close_user::*;
 
 pub mod req_randomness;
 pub use req_randomness::*;
-pub mod callback;
-pub use callback::*;
+pub mod Consume;
+pub use Consume::*;

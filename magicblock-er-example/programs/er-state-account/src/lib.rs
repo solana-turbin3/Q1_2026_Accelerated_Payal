@@ -3,15 +3,13 @@
 
 use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::anchor::ephemeral;
-
 mod state;
 mod instructions;
 
 use instructions::*;
 
-declare_id!("9hG187VazKdEZcYbsEcoPuPEWwkfF9HccUDTAJzuEcg3");
-
-#[ephemeral]
+declare_id!("AviWiy5KHdcmBA4X6YLiT7BMy1Kn7kVgeNAoBXEXhMBh");
+#[ephemeral]    
 #[program]
 pub mod er_state_account {
 
@@ -50,6 +48,20 @@ pub mod er_state_account {
     pub fn close(ctx: Context<CloseUser>) -> Result<()> {
         ctx.accounts.close()?;
         
+        Ok(())
+    }
+    pub fn request_randomness(ctx: Context<RequestRandomnessCtx>, client_seed: u8) -> Result<()> {
+        ctx.accounts.request_randomness(client_seed)?;
+
+        Ok(())
+    }
+
+    pub fn consume_randomness(
+        ctx: Context<ConsumeRandomnessCtx>,
+        randomness: [u8; 32],
+    ) -> Result<()> {
+        ctx.accounts.consume_randomness(randomness)?;
+
         Ok(())
     }
 }
